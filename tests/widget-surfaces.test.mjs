@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+test('web widget and PWA manifest are present',()=>{assert.ok(fs.existsSync('public/widgets/evangel-widget.js'));assert.ok(fs.existsSync('public/manifest.webmanifest'));});
+test('native widget source scaffolds use WidgetKit and Glance',()=>{const ios=fs.readFileSync('native/ios-widget/EVANGELWidget.swift','utf8');const and=fs.readFileSync('native/android-widget/EVANGELWidget.kt','utf8');assert.match(ios,/WidgetKit/);assert.match(ios,/AppIntent/);assert.match(and,/GlanceAppWidget/);});

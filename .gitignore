@@ -1,0 +1,50 @@
+#env
+.env
+.env.*
+
+# Logs
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env
+.vite
+base44/.app.jsonc
+
+# Isolated feature worktrees
+.worktrees/
+worktrees/
+
+# Distribution archives belong in Releases, not normal Git history
+*.zip
+*.7z
+*.tar.gz
+*.tgz
+
+# Raw design/source binaries should not enter normal Git history
+*.psd
+*.ai
+
+# Local release staging
+artifacts/
+releases/

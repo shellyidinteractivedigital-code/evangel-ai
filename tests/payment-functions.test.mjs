@@ -1,0 +1,5 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+test('checkout is authenticated and server-priced',()=>{const s=read('base44/functions/billing/createCheckoutSession/entry.ts');assert.match(s,/requireAuthenticatedUser/);assert.match(s,/forbiddenClientFields/);assert.match(s,/priceSecretNameForPlan/);assert.match(s,/mode:'subscription'/);assert.doesNotMatch(s,/body\.price_id|body\.amount|body\.currency/);});
+test('portal derives customer from owned billing account',()=>{const s=read('base44/functions/billing/createCustomerPortalSession/entry.ts');assert.match(s,/findBillingAccount/);assert.doesNotMatch(s,/body\.customer/);});
+test('webhook verifies raw body before service writes',()=>{const s=read('base44/functions/billing/stripeWebhook/entry.ts');const raw=s.indexOf('await req.text()'),verify=s.indexOf('constructEventAsync'),service=s.indexOf('serviceClient(req)');assert.ok(raw>=0&&verify>raw&&service>verify);assert.match(s,/stripe-signature/);assert.match(s,/STRIPE_WEBHOOK_SECRET/);assert.match(s,/findStripeEvent/);});

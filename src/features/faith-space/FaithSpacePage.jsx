@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import FaithSpace from '@/components/FaithSpace';
+import DictateButton from '@/components/DictateButton';
 
 const MODES = [
   { id:'all', label:'My Journey', kinds:null },
   { id:'scripture', label:'Scripture', kinds:['verse','highlight'] },
   { id:'prayer', label:'Prayer', kinds:['prayer','answered_prayer'] },
-  { id:'study', label:'Study + Sermons', kinds:['study','word_study','sermon','note','journal','drive_reflection','voice_note'] },
+  { id:'study', label:'Study + Sermons', kinds:['study','word_study','sermon','lesson','note','journal','drive_reflection','voice_note'] },
 ];
 
-export default function FaithSpacePage({ items = [], notify, onAddFaithNote, onOpenItem, premiumVoice, fallbackVoiceName }) {
+export default function FaithSpacePage({ items = [], notify, onAddFaithNote, onOpenItem, premiumVoice, fallbackVoiceName, onReload }) {
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [mode, setMode] = useState('all');
@@ -60,7 +61,7 @@ export default function FaithSpacePage({ items = [], notify, onAddFaithNote, onO
 
       <div className="space-shell glass">
         {visibleItems.length
-          ? <FaithSpace items={visibleItems} onSelect={select} onOpenItem={onOpenItem} premiumVoice={premiumVoice} fallbackVoiceName={fallbackVoiceName} />
+          ? <FaithSpace items={visibleItems} onSelect={select} onOpenItem={onOpenItem} premiumVoice={premiumVoice} fallbackVoiceName={fallbackVoiceName} notify={notify} onConverted={onReload} />
           : <div className="faith-space-empty"><strong>{emptyMessage}</strong><span>Nothing fake is shown here. This space reflects your actual saved material.</span></div>}
         <div className="space-legend"><span>✦ Scripture</span><span>♥ Prayer</span><span>● Journal</span><span>◇ Study</span><span>▤ Sermons</span></div>
       </div>
@@ -69,7 +70,9 @@ export default function FaithSpacePage({ items = [], notify, onAddFaithNote, onO
 
       <div className="faith-save">
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
+        <DictateButton onDictate={(t) => setTitle((title ? title + ' ' : '') + t)} notify={notify} label="Dictate title" />
         <input value={text} onChange={(e) => setText(e.target.value)} placeholder="A short note, prayer, or reflection" />
+        <DictateButton onDictate={(t) => setText((text ? text + ' ' : '') + t)} notify={notify} label="Dictate" />
         <button className="primary" onClick={save}>Save to Faith Space</button>
       </div>
     </section>

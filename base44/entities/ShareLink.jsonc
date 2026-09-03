@@ -1,0 +1,49 @@
+{
+  "name": "ShareLink",
+  "type": "object",
+  "properties": {
+    "owner_user_id": {
+      "type": "string",
+      "minLength": 1.0
+    },
+    "faith_item_id": {
+      "type": "string",
+      "minLength": 1.0
+    },
+    "token": {
+      "type": "string",
+      "minLength": 12.0,
+      "maxLength": 128.0
+    },
+    "include_notes": {
+      "type": "boolean",
+      "default": false
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "owner_user_id",
+    "faith_item_id",
+    "token",
+    "revoked"
+  ],
+  "rls": {
+    "create": false,
+    "read": {
+      "data.owner_user_id": "{{user.id}}"
+    },
+    "update": false,
+    "delete": false
+  }
+}

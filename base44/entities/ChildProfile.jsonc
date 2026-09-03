@@ -1,0 +1,65 @@
+{
+  "name": "ChildProfile",
+  "type": "object",
+  "properties": {
+    "parent_user_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nickname": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "age_band": {
+      "type": "string",
+      "enum": [
+        "young_explorer",
+        "growing_reader",
+        "teen_study"
+      ]
+    },
+    "mic_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "saved_voice_notes_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "external_sharing_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "premium_voice_key": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "parent_user_id",
+    "nickname",
+    "age_band"
+  ],
+  "rls": {
+    "create": {
+      "data.parent_user_id": "{{user.id}}"
+    },
+    "read": {
+      "data.parent_user_id": "{{user.id}}"
+    },
+    "update": {
+      "data.parent_user_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.parent_user_id": "{{user.id}}"
+    }
+  }
+}

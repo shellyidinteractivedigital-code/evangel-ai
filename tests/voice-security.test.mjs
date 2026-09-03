@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+test('premium voice keys stay server-side and voices are allowlisted',()=>{const t=read('base44/functions/voice/synthesize/entry.ts');assert.match(t,/OPENAI_API_KEY/);assert.match(t,/marin/);assert.match(t,/cedar/);assert.doesNotMatch(t,/VITE_OPENAI_API_KEY/);});
+test('realtime mic gateway uses authenticated WebRTC call proxy',()=>{const t=read('base44/functions/voice/realtimeCall/entry.ts');assert.match(t,/auth\.me/);assert.match(t,/application\/sdp/);assert.match(t,/\/v1\/realtime\/calls/);assert.match(t,/Never claim to speak for God/);});

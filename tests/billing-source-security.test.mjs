@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';
+test('backend secrets and auth stay server side',()=>{const a=fs.readFileSync('base44/shared/billing/base44.js','utf8');const s=fs.readFileSync('base44/shared/billing/stripe.js','utf8');assert.match(a,/auth\.me\(\)/);assert.match(a,/asServiceRole/);assert.match(s,/secrets\.get\('STRIPE_SECRET_KEY'\)/);assert.doesNotMatch(s,/VITE_STRIPE_SECRET_KEY|REACT_APP_STRIPE_SECRET_KEY/);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+test('Bible Study loads the full WEB corpus for search and shows source notice',()=>{const src=fs.readFileSync('src/features/study/StudyPage.jsx','utf8');assert.match(src,/loadScripture/);assert.match(src,/searchScripture/);assert.match(src,/scriptureSourceNotice/);assert.doesNotMatch(src,/starter Scripture library/i);});

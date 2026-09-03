@@ -1,0 +1,4 @@
+const KNOWN_STATUSES=new Set(['incomplete','incomplete_expired','trialing','active','past_due','canceled','unpaid','paused']);
+export function normalizeSubscriptionStatus(status){return KNOWN_STATUSES.has(status)?status:'unknown';}
+export function entitlementStateForSubscription({status,cancelAtPeriodEnd=false,currentPeriodEnd=null,now=new Date()}){const normalized=normalizeSubscriptionStatus(status);let plusActive=normalized==='active'||normalized==='trialing';const effectiveUntil=currentPeriodEnd||null;if(plusActive&&cancelAtPeriodEnd&&currentPeriodEnd)plusActive=new Date(currentPeriodEnd).getTime()>new Date(now).getTime();return{plusActive,effectiveUntil};}
+export const PLUS_FEATURE_KEYS=Object.freeze(['plus','advanced_scholar','premium_voices','cloud_sync','unlimited_collections']);

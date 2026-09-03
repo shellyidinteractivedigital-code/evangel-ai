@@ -1,0 +1,3 @@
+import {createClientFromRequest} from "npm:@base44/sdk";
+export async function requireAuthenticatedUser(req){const base44=createClientFromRequest(req);const user=await base44.auth.me();if(!user||user.disabled){const error=new Error('unauthorized');error.code='unauthorized';throw error;}return{base44,user};}
+export function serviceClient(req){const base44=createClientFromRequest(req);return{base44,service:base44.asServiceRole};}

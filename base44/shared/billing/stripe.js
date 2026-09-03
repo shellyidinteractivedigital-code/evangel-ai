@@ -1,0 +1,3 @@
+import Stripe from "npm:stripe"; import {secrets} from "base44:runtime";
+export function getStripe(){const secretKey=secrets.get('STRIPE_SECRET_KEY');if(!secretKey){const error=new Error('stripe_not_configured');error.code='stripe_not_configured';throw error;}return new Stripe(secretKey,{maxNetworkRetries:2});}
+export function getRequiredSecret(name){const value=secrets.get(name);if(!value){const error=new Error('billing_not_configured');error.code='billing_not_configured';throw error;}return value;}

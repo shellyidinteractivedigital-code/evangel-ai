@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';const read=n=>JSON.parse(fs.readFileSync(`base44/entities/${n}.jsonc`,'utf8'));
+test('billing entities block user writes',()=>{for(const n of['BillingAccount','Entitlement']){const s=read(n);assert.deepEqual(s.rls.read,{'data.user_id':'{{user.id}}'});assert.equal(s.rls.create,false);assert.equal(s.rls.update,false);assert.equal(s.rls.delete,false);}assert.deepEqual(read('StripeEvent').rls,{create:false,read:false,update:false,delete:false});});

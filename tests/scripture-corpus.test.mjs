@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+test('full WEB corpus is bundled for study search',()=>{const p='public/data/engwebp_vpl.txt';assert.equal(fs.existsSync(p),true);const text=fs.readFileSync(p,'utf8');assert.match(text,/^GEN 1:1 /m);assert.match(text,/^REV 22:21 /m);assert.ok(text.split(/\r?\n/).filter(Boolean).length>30000);});
+test('scripture service identifies WEB source and preserves text',()=>{const svc=fs.readFileSync('src/services/scripture.js','utf8');const registry=fs.readFileSync('src/data/bibleSources.js','utf8');assert.match(registry,/World English Bible/);assert.match(registry,/public domain/i);assert.match(svc,/BIBLE_SOURCES/);assert.doesNotMatch(svc,/starter Scripture/i);});
