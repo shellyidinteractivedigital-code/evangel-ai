@@ -34,3 +34,21 @@ test('Creator displays simple numbered instructions', () => {
   assert.match(creator, /4\. Generate/);
   assert.match(creator, /5\. Save/);
 });
+
+test('Creator provides working start over and delete controls', () => {
+  const creator = readFileSync('src/features/create/CreatePage.jsx', 'utf8');
+  assert.match(creator, /const startOver = \(\) =>/);
+  assert.match(creator, /window\.confirm\('Start over\?/);
+  assert.match(creator, /Start over/);
+  assert.match(creator, /deleteFaithItem\(item\.id\)/);
+  assert.match(creator, /Delete saved item/);
+});
+
+test('Library confirms and deletes saved items through Base44', () => {
+  const library = readFileSync('src/features/library/LibraryPage.jsx', 'utf8');
+  const service = readFileSync('src/services/faithLibrary.js', 'utf8');
+  assert.match(library, /window\.confirm/);
+  assert.match(library, /deleteFaithItem\(item\.id\)/);
+  assert.match(library, /Delete/);
+  assert.match(service, /FaithItem\.delete\(itemId\)/);
+});

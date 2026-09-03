@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { FolderPlus, Save, Share2, Sparkles, Volume2, X } from 'lucide-react';
-import { listMyFaithItems, saveFaithItem } from '../../services/faithLibrary';
+import { FolderPlus, RotateCcw, Save, Share2, Sparkles, Trash2, Volume2, X } from 'lucide-react';
+import { deleteFaithItem, listMyFaithItems, saveFaithItem } from '../../services/faithLibrary';
 import { createFaithFolder, listMyFaithFolders } from '../../services/faithFolders';
 import { nativeShare } from '../../services/share';
 import { speakEvangel } from '../../services/evangelVoice';
@@ -118,6 +118,32 @@ export default function CreatePage({ notify, voiceName, premiumVoice, onSaved, v
     try { await nativeShare(buildItem()); notify?.('Share opened'); } catch { notify?.('Sharing was canceled.'); }
   };
   const listen = (value) => speakEvangel({ text: value, premiumVoice, fallbackVoiceName: voiceName });
+  const startOver = () => {
+    if ((creationPrompt || supportingNotes || title || text || generated) && !window.confirm('Start over? Your unsaved work will be cleared.')) return;
+    setType('sermon');
+    setCreationPrompt('');
+    setSupportingNotes('');
+    setTitle('');
+    setText('');
+    setSelectedFolderId('');
+    setNewFolderName('');
+    setInterview({ ...DEFAULT_INTERVIEW });
+    setGenerated(null);
+    onClearSource?.();
+    notify?.('Creator cleared. Start with a new idea.');
+  };
+  const removeSavedItem = async (item) => {
+    const name = item.title || item.scripture_ref || 'this saved item';
+    if (!window.confirm(`Delete "${name }"? This cannot be undone.`)) return;
+    try {
+      await deleteFaithItem(item.id);
+      setItems((current) => current.filter((savedItem) => savedItem.id !== item.id));
+      await onSaved?.();
+      notify?.('Saved item deleted.');
+    } catch {
+      notify?.('Could not delete this item. Please try again.');
+    }
+  };
 
   return <section className="page">
     <div className="page-title"><div><p className="eyebrow">CREATOR</p><h2>Turn your idea into a meaningful message.</h2><p>Your idea leads. Scripture grounds it. You control the voice, length, audience, and final words.</p></div></div>
@@ -140,6 +166,7 @@ export default function CreatePage({ notify, voiceName, premiumVoice, onSaved, v
         <button className="primary" disabled={busy || !creationPrompt.trim()} onClick={generate}><Sparkles size={18}/> {busy ? 'Creating from your idea…' : `Create my ${kindDef.label}`}</button>
         <button className="secondary" onClick={share}><Share2 size={18}/> Share</button>
         <button className="secondary" onClick={() => listen(text)}><Volume2 size={18}/> Listen</button>
+        <button className="secondary" onClick={startOver}><RotateCcw size={18}/> Start over</button>
       </div>
       <div className="folder-save">
         <label><span>Choose a folder</span><select value={selectedFolderId} onChange={(event) => { setSelectedFolderId(event.target.value); setNewFolderName(''); }}><option value="">Faith Space, no folder</option>{folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></label>
@@ -150,6 +177,6 @@ export default function CreatePage({ notify, voiceName, premiumVoice, onSaved, v
     </div>
     <GeneratedResult result={generated} onUseDraft={(nextTitle, nextText) => { setTitle(nextTitle); setText(nextText); }}/>
     <div className="page-title"><div><p className="eyebrow">YOUR SAVED</p><h3>Prayers · Studies · Sermons</h3></div></div>
-    <div className="saved-grid">{items.length === 0 && <p className="empty">Nothing saved yet.</p>}{items.map((item) => <article className="glass saved-card" key={item.id}><small>{item.kind?.replace('_', ' ')}{item.folder_id ? ' · foldered' : ''}</small><h3>{item.title || item.scripture_ref || 'Saved item'}</h3><p>{item.text}</p><div className="editor-actions"><button className="secondary" onClick={() => listen(`${item.title}. ${item.text}`)}><Volume2 size={16}/> Listen</button><FaithActions item={item} notify={notify}/></div></article>)}</div>
+    <div className="saved-grid">{items.length === 0 && <p className="empty">Nothing saved yet.</p>}{items.map((item) => <article className="glass saved-card" key={item.id}><small>{item.kind?.replace('_', ' ')}{item.folder_id ? ' · foldered' : ''}</small><h3>{item.title || item.scripture_ref || 'Saved item'}</h3><p>{item.text}</p><div className="editor-actions"><button className="secondary" onClick={() => listen(`${item.title}. ${item.text}`)}><Volume2 size={16}/> Listen</button><FaithActions item={item} notify={notify}/><button className="secondary danger" onClick={() => removeSavedItem(item)} aria-label="Delete saved item"><Trash2 size={16}/> Delete</button></div></article>)}</div>
   </section>;
 }

@@ -31,3 +31,8 @@ export async function listMyFaithItems(){
   const user = await currentUser();
   return base44.entities.FaithItem.filter({owner_user_id:user.id},'-created_at',200);
 }
+
+export async function deleteFaithItem(itemId){
+  if (!itemId) throw new Error('item_id_required');
+  return base44.entities.FaithItem.delete(itemId);
+}

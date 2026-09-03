@@ -242,7 +242,7 @@ export default function App() {
       {page==='journal' && <JournalPage journalText={journalText} onJournalTextChange={setJournalText} journals={journals} onJournalsChange={setJournals} notify={notify} voiceName={voiceName} premiumVoice={premiumVoice}/>} 
       {page==='sermon' && <SermonPage sermon={sermon} onSermonChange={setSermon} verse={verse} notify={notify} onSaved={refreshFaithItems}/>} 
       {page==='create' && <CreatePage notify={notify} voiceName={voiceName} premiumVoice={premiumVoice} onSaved={refreshFaithItems} verse={verse} sourceItem={creatorSource} onClearSource={() => setCreatorSource(null)}/>}
-      {page==='library' && <LibraryPage notify={notify} voiceName={voiceName} premiumVoice={premiumVoice} onNavigate={navigatePage}/>} 
+      {page==='library' && <LibraryPage notify={notify} voiceName={voiceName} premiumVoice={premiumVoice} onNavigate={navigatePage} onDeleted={refreshFaithItems}/>} 
       {page==='voices' && <VoicesPage voices={voices} voiceName={voiceName} onVoiceNameChange={setVoiceName} premiumVoice={premiumVoice} onPremiumVoiceChange={setPremiumVoice}/>} 
       {page==='billing' && <BillingPage/>}
       {['privacy','terms','refunds','cancellation'].includes(page) && <LegalPage type={page} onNavigate={navigatePage}/>}

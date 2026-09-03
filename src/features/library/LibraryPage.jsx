@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, FolderOpen, Volume2 } from 'lucide-react';
-import { listMyFaithItems } from '../../services/faithLibrary';
+import { ChevronDown, FolderOpen, Trash2, Volume2 } from 'lucide-react';
+import { deleteFaithItem, listMyFaithItems } from '../../services/faithLibrary';
 import { speakEvangel } from '../../services/evangelVoice';
 
 const KINDS = ['prayer', 'verse', 'sermon'];
 const KIND_LABEL = { prayer: 'Prayer', verse: 'Scripture', sermon: 'Sermon' };
 const UNTAGGED = 'Unfiled';
 
-export default function LibraryPage({ notify, voiceName, premiumVoice, onNavigate }) {
+export default function LibraryPage({ notify, voiceName, premiumVoice, onNavigate, onDeleted }) {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState({});
   const [query, setQuery] = useState('');
@@ -45,6 +45,18 @@ export default function LibraryPage({ notify, voiceName, premiumVoice, onNavigat
 
   const toggle = (tag) => setOpen((o) => ({ ...o, [tag]: !o[tag] }));
   const listen = (item) => speakEvangel({ text: `${item.title || item.scripture_ref || ''}. ${item.text || ''}`, premiumVoice, fallbackVoiceName: voiceName });
+  const remove = async (item) => {
+    const name = item.title || item.scripture_ref || 'this saved item';
+    if (!window.confirm(`Delete "${name }"? This cannot be undone.`)) return;
+    try {
+      await deleteFaithItem(item.id);
+      setItems((current) => current.filter((savedItem) => savedItem.id !== item.id));
+      await onDeleted?.();
+      notify?.('Saved item deleted.');
+    } catch {
+      notify?.('Could not delete this item. Please try again.');
+    }
+  };
 
   return (
     <section className="page">
@@ -87,6 +99,7 @@ export default function LibraryPage({ notify, voiceName, premiumVoice, onNavigat
                     <div className="faith-actions">
                       <button onClick={() => listen(item)}><Volume2 size={15} /> Listen</button>
                       {item.scripture_ref && <button onClick={() => onNavigate?.('study')}>Open in Study</button>}
+                      <button className="danger" onClick={() => remove(item)} aria-label={`Delete ${item.title || 'saved item'}`}><Trash2 size={15} /> Delete</button>
                     </div>
                   </article>
                 ))}
