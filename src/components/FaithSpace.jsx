@@ -149,18 +149,6 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, onPositio
     const sky = new THREE.Mesh(new THREE.SphereGeometry(70, 40, 32), new THREE.MeshBasicMaterial({ map: makeSkyTexture(), side: THREE.BackSide, depthWrite: false, fog: false }));
     skyGroup.add(sky);
 
-    const shootingStars = [];
-    const spawnShooter = () => {
-      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(-2.6, -1.2, 0)]);
-      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xfff0c8, transparent: true, opacity: 0.9 }));
-      line.position.set((Math.random() * 2 - 1) * 22, 11 + Math.random() * 6, -10 + (Math.random() * 2 - 1) * 10);
-      line.rotation.z = Math.atan2(-1.2, -2.6);
-      const vel = new THREE.Vector3(-2.6, -1.2, 0).normalize().multiplyScalar(0.16 + Math.random() * 0.12);
-      skyGroup.add(line);
-      shootingStars.push({ line, vel, life: 0, max: 110 + Math.random() * 60, delay: Math.random() * 240 });
-    };
-    for (let i = 0; i < 4; i++) spawnShooter();
-
     const starLayers = [];
     const makeStars = (count, rMin, rMax, color, size, opacity) => {
       const pos = new Float32Array(count * 3);
@@ -176,7 +164,7 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, onPositio
       geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
       const mat = new THREE.PointsMaterial({ color, size, transparent: true, opacity, depthWrite: false });
       const points = new THREE.Points(geo, mat);
-      points.userData = { baseOpacity: opacity };
+      points.userData = { baseOpacity: opacity, twinklePhase: starLayers.length * 1.73, twinkleSpeed: 0.55 + starLayers.length * 0.18 };
       root.add(points);
       starLayers.push(points);
       return points;
@@ -345,18 +333,15 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, onPositio
       if (!dragging && !draggedNode && !paused) rotY += 0.0009;
       if (!paused) skyGroup.rotation.y += 0.0003;
       camera.position.z += (cameraDistance - camera.position.z) * 0.12;
-      shootingStars.forEach((s) => {
-        if (reducedMotion) return;
-        if (s.delay > 0) { s.delay--; return; }
-        s.life++;
-        s.line.position.add(s.vel);
-        s.line.material.opacity = 0.9 * (1 - s.life / s.max);
-        if (s.life > s.max) { s.life = 0; s.line.position.set((Math.random() * 2 - 1) * 22, 11 + Math.random() * 6, -10 + (Math.random() * 2 - 1) * 10); s.delay = 140 + Math.random() * 380; }
-      });
       starLayers.forEach((layer, idx) => {
-        if (!reducedMotion) layer.rotation.y += 0.0004 * (idx === 0 ? 1 : -0.6);
+        if (!reducedMotion) {
+          layer.rotation.y += 0.00018 * (idx === 0 ? 1 : -0.6);
+          layer.rotation.z += 0.00004 * (idx === 0 ? -1 : 1);
+        }
         const base = layer.userData.baseOpacity || 0.6;
-        layer.material.opacity = reducedMotion ? base : base + Math.sin(t * 0.8 + idx) * 0.12;
+        const phase = layer.userData.twinklePhase || 0;
+        const speed = layer.userData.twinkleSpeed || 0.6;
+        layer.material.opacity = reducedMotion ? base : base + Math.sin(t * speed + phase) * 0.14;
       });
       nodeMeshes.forEach((node, i) => {
         const isFocused = focusItemIdRef.current === node.item.id;
