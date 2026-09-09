@@ -10,7 +10,7 @@ export const PREMIUM_VOICES = [
   { key: 'echo', name: 'Bold Proclamation', style: 'Confident, resonant, and direct', presentation: 'male', realtimeCompatible: true },
 ];
 
-export async function playPremiumSpeech({ text, voice = 'marin', fallbackVoiceName = '' }) {
+export async function playPremiumSpeech({ text, voice = 'marin', fallbackVoiceName = '', allowDeviceFallback = false }) {
   try {
     const result = await base44.functions.invoke('voice/synthesize', { text, voice });
     const payload = result?.data || result;
@@ -19,7 +19,7 @@ export async function playPremiumSpeech({ text, voice = 'marin', fallbackVoiceNa
     await audio.play();
     return { premium: true, audio };
   } catch (error) {
-    speakText({ text, voiceName: fallbackVoiceName });
+    if (allowDeviceFallback) speakText({ text, voiceName: fallbackVoiceName });
     return { premium: false, error };
   }
 }
