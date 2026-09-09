@@ -34,8 +34,8 @@ test('EVANGEL app stores a premium narrator choice independent of device voice f
 test('Voices page can select every premium voice for the app, not only preview it', () => {
   const s = read('src/features/voices/VoicesPage.jsx');
   assert.match(s, /PREMIUM_VOICES\.map/);
-  assert.match(s, /onPremiumVoiceChange\?\.\(v\.key\)/);
-  assert.match(s, /voice:v\.key/);
+  assert.match(s, /onPremiumVoiceChange\?\.\(voice\.key\)/);
+  assert.match(s, /voice: voice\.key/);
   assert.match(s, /v\.key\.toUpperCase\(\)/);
   assert.match(s, /SELECTED/);
 });
