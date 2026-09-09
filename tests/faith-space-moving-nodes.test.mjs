@@ -49,3 +49,32 @@ test('Faith Space node labels have readable CSS and selected states', () => {
   assert.match(s, /\.faith-node-card\.selected/);
   assert.match(s, /\.faith-node-detail/);
 });
+
+test('floating cards can be dragged and their positions are saved', () => {
+  const s = renderer();
+  const service = fs.readFileSync('src/services/faithLibrary.js', 'utf8');
+  assert.match(s, /onPositionChange/);
+  assert.match(s, /draggedNode/);
+  assert.match(s, /setPointerCapture|pointermove/);
+  assert.match(service, /updateFaithItemPosition/);
+  assert.match(service, /FaithItem\.update/);
+});
+
+test('Faith Space supports orbit, zoom, pause motion and layout reset', () => {
+  const s = renderer();
+  const p = page();
+  assert.match(s, /wheel/);
+  assert.match(s, /motionPaused/);
+  assert.match(p, /Pause motion|Resume motion/);
+  assert.match(p, /Reset layout/);
+});
+
+test('a searchable section list mirrors every visible Faith Space item', () => {
+  const p = page();
+  assert.match(p, /faith-space-index/);
+  assert.match(p, /visibleItems\.map/);
+  assert.match(p, /Open/);
+  assert.match(p, /Listen/);
+  assert.match(p, /Delete/);
+  assert.match(p, /focusItemId/);
+});
