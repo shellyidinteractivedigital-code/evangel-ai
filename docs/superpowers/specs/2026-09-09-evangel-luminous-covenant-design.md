@@ -25,7 +25,7 @@ The primary lockup combines the Celestial Seal with the EVANGEL wordmark. It is 
 
 ### Navigation lockup
 
-The navigation version pairs a simplified seal with the EVANGEL name and the existing Scripture-focused descriptor. It remains readable in the desktop sidebar.
+The navigation version pairs a simplified seal with the EVANGEL name and the existing Scripture-focused descriptor. In the top-left desktop position, the seal and wordmark use covenant gold, illuminated gold, and deep sanctuary blue. The top-left logo does not use a white treatment. It remains readable in the desktop sidebar.
 
 ### Compact mark
 
@@ -113,7 +113,15 @@ The shared EvangelMark component becomes the single vector source for primary an
 
 The implementation avoids duplicating complex SVG markup across pages.
 
-## 12. Quality and Verification
+## 12. Interaction and Link Integrity
+
+Every visible interactive control must have a working destination or action. The implementation will audit desktop navigation, mobile navigation, footer links, Home calls to action, About and whitepaper links, legal and support links, Creator and Library actions, Faith Space actions, and persistent EVANGEL Bot shortcuts.
+
+Play and Listen buttons must route through the selected EVANGEL API voice. Voice previews must play the voice named on the card. Ask the Word must use a supported realtime voice. Loading, success, subscription, configuration, provider, and rate-limit states must be visible. A failed API request must never silently play a different device voice.
+
+Keyboard activation, disabled states during requests, and descriptive accessible labels are required.
+
+## 13. Quality and Verification
 
 Automated tests will verify:
 
@@ -127,10 +135,10 @@ Automated tests will verify:
 
 Visual verification will cover desktop and mobile composition, icon legibility, image cropping, contrast, missing-image fallback, and reduced-motion behavior.
 
-## 13. Separate Voice Access Workstream
+## 14. Separate Voice Access Workstream
 
-After the brand work, EVANGEL will enable Marin and Cedar for every signed-in account with conservative free-account limits. The remaining four voices stay premium. Voice requests remain authenticated, server-side, allowlisted, and rate-limited. API failures must display a clear message and must never masquerade as a selected voice by silently substituting a device voice.
+After the brand work, EVANGEL will enable Marin and Cedar for every signed-in account with conservative free-account limits. Marin is the free gentle female voice and Cedar is the free warm male voice. Coral, Shimmer, Onyx, and Echo remain premium. Voice requests remain authenticated, server-side, allowlisted, and rate-limited. API failures must display a clear message and must never masquerade as a selected voice by silently substituting a device voice.
 
-## 14. Non-Goals
+## 15. Non-Goals
 
 This project does not change EVANGEL theology, rewrite generator content, add a new image-generation feature for subscribers, clone a user voice, remove authentication, expose provider keys, or claim endorsement by concordant.org.
