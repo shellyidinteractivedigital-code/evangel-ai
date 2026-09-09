@@ -1,14 +1,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
+import { guardPremiumVoiceRequest } from '../../../shared/voice/security.js';
+
+const REALTIME_VOICES = new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
 
 Deno.serve(async (req) => {
   try {
+    if (req.method !== 'POST') return Response.json({ error: 'method_not_allowed' }, { status: 405, headers: { Allow: 'POST' } });
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'unauthorized' }, { status: 401 });
     const { sdp, voice: requestedVoice } = await req.json();
     if (typeof sdp !== 'string' || !sdp || sdp.length > 100000) return Response.json({ error: 'invalid_sdp' }, { status: 400 });
-    const voice = requestedVoice === 'cedar' ? 'cedar' : 'marin';
+    if (!REALTIME_VOICES.has(requestedVoice)) return Response.json({ error: 'invalid_voice' }, { status: 400 });
+    const voice = requestedVoice;
+    const guard = await guardPremiumVoiceRequest({ base44, user, kind: 'realtime', units: 1, requestLimit: 10, unitLimit: 10 });
+    if (!guard.ok) return Response.json({ error: guard.error }, { status: guard.status, headers: guard.retryAfter ? { 'Retry-After': String(guard.retryAfter) } : undefined });
     const key = secrets.get('OPENAI_API_KEY');
     if (!key) return Response.json({ error: 'realtime_voice_not_configured' }, { status: 503 });
     const form = new FormData();
