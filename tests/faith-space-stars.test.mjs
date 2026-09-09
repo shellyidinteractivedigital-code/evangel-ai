@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';const read=p=>fs.readFileSync(p,'utf8');
+test('Faith Space uses dimensional twinkling stars without shooting trails',()=>{const s=read('src/components/FaithSpace.jsx');assert.doesNotMatch(s,/shootingStars|spawnShooter|\bvel\b/);assert.match(s,/twinklePhase/);assert.match(s,/starLayers/);});
+test('Faith Space retains navigation and movable saved cards',()=>{const s=read('src/components/FaithSpace.jsx');for(const word of ['pointerdown','wheel','reset','drag','rotY'])assert.match(s,new RegExp(word,'i'));});
