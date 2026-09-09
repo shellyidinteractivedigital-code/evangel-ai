@@ -33,6 +33,8 @@ import YoungExplorerPage from '../features/family/YoungExplorerPage';
 import NotesPage from '../features/notes/NotesPage';
 import SharedItemPage from '../features/share/SharedItemPage';
 import EvangelBot from '../components/EvangelBot';
+import EvangelMark from '../components/brand/EvangelMark';
+import WhitePaperPage from '../features/whitepaper/WhitePaperPage';
 
 const VERSES = STARTER_SCRIPTURE;
 
@@ -232,8 +234,8 @@ export default function App() {
   };
 
   return <div className="app-shell">
-    <aside className="side-nav glass"><button className="brand" onClick={() => navigatePage('home')}><span className="brand-mark">✦</span><span><b>EVANGEL</b><small>Scripture • Precision • Presence</small></span></button><nav>{NAV_ITEMS.map(([id,label,Icon]) => <button key={id} className={page===id?'active':''} onClick={() => navigatePage(id)}><Icon size={20}/><span>{label}</span></button>)}</nav><div className="sidebar-foot"><button onClick={exportData}><Download size={18}/> Export My Library</button><button onClick={() => navigatePage('voices')}><Settings size={18}/> Settings</button></div></aside>
-    <main className="main"><header className="topbar glass"><div className="mobile-brand">✦ <b>EVANGEL</b></div><div className="top-actions"><button className="pill gold" onClick={() => navigatePage('drive')}><Car size={16}/> DRIVE</button><button className="pill" onClick={() => navigatePage('space')}><LibraryBig size={16}/> FAITH SPACE</button><button className={`mic ${listening?'listening':''}`} onClick={startRecognition} aria-label="Voice command"><Mic size={21}/></button><CircleUserRound size={24}/></div></header>
+    <aside className="side-nav glass"><button className="brand" onClick={() => navigatePage('home')}><EvangelMark/></button><nav>{NAV_ITEMS.map(([id,label,Icon]) => <button key={id} className={page===id?'active':''} onClick={() => navigatePage(id)}><Icon size={20}/><span>{label}</span></button>)}</nav><div className="sidebar-foot"><button onClick={exportData}><Download size={18}/> Export My Library</button><button onClick={() => navigatePage('voices')}><Settings size={18}/> Settings</button></div></aside>
+    <main className="main"><header className="topbar glass"><div className="mobile-brand"><EvangelMark compact/></div><div className="top-actions"><button className="pill gold" onClick={() => navigatePage('drive')}><Car size={16}/> DRIVE</button><button className="pill" onClick={() => navigatePage('space')}><LibraryBig size={16}/> FAITH SPACE</button><button className={`mic ${listening?'listening':''}`} onClick={startRecognition} aria-label="Voice command"><Mic size={21}/></button><CircleUserRound size={24}/></div></header>
       {page==='home' && <HomePage verse={dailyVerse} voiceName={voiceName} premiumVoice={premiumVoice} onNavigate={navigatePage} onSaveVerse={saveDailyVerse}/>} 
       {page==='drive' && <DrivePage verse={verse} voiceName={voiceName} premiumVoice={premiumVoice} micStatus={recognitionStatus} answer={driveAnswer} sermon={sermon} listening={listening} onAsk={startRecognition} onNext={nextVerse} onSave={saveDriveMoment} onEmail={emailDriveWork} onSermon={startSermon} onRepeat={() => say(driveAnswer?.answer || `${verse.ref}. ${verse.text}`)}/>} 
       {page==='scholar' && <ScholarPage/>}
@@ -247,14 +249,15 @@ export default function App() {
       {page==='billing' && <BillingPage/>}
       {['privacy','terms','refunds','cancellation'].includes(page) && <LegalPage type={page} onNavigate={navigatePage}/>}
       {page==='support' && <SupportPage onNavigate={navigatePage}/>} 
-      {page==='about' && <AboutPage/>}
+      {page==='about' && <AboutPage onNavigate={navigatePage}/>}
+      {page==='whitepaper' && <WhitePaperPage onNavigate={navigatePage}/>} 
       {page==='groups' && <GroupsPage notify={notify}/>} 
       {page==='family' && <YoungExplorerPage onNavigate={navigatePage} notify={notify} voiceName={voiceName} premiumVoice={premiumVoice}/>} 
       {page==='notes' && <NotesPage notify={notify} onStartCreator={startCreatorFromNote}/>} 
       {page==='shared' && <SharedItemPage token={shareToken} notify={notify}/>} 
     </main>
     <nav className="mobile-nav glass">{[['home',Home,'Home'],['space',LibraryBig,'Faith'],['drive',Mic,'Listen'],['study',BookOpen,'Study'],['journal',SquarePen,'Journal']].map(([id,Icon,label]) => <button className={page===id?'active':''} key={id} onClick={() => navigatePage(id)}><Icon size={21}/><small>{label}</small></button>)}</nav>
-    <footer className="legal-footer"><span>EVANGEL by Heartmonics</span><button onClick={()=>navigatePage('about')}>About</button><button onClick={()=>navigatePage('groups')}>Groups</button><button onClick={()=>navigatePage('privacy')}>Privacy</button><button onClick={()=>navigatePage('terms')}>Terms</button><button onClick={()=>navigatePage('refunds')}>Refunds</button><button onClick={()=>navigatePage('cancellation')}>Cancellation</button><button onClick={()=>navigatePage('support')}>Support</button><a href="mailto:support.evangel@gmail.com">support.evangel@gmail.com</a></footer>
+    <footer className="legal-footer"><span>EVANGEL by Heartmonics</span><button onClick={()=>navigatePage('about')}>About</button><button onClick={()=>navigatePage('whitepaper')}>White Paper</button><button onClick={()=>navigatePage('groups')}>Groups</button><button onClick={()=>navigatePage('privacy')}>Privacy</button><button onClick={()=>navigatePage('terms')}>Terms</button><button onClick={()=>navigatePage('refunds')}>Refunds</button><button onClick={()=>navigatePage('cancellation')}>Cancellation</button><button onClick={()=>navigatePage('support')}>Support</button><a href="mailto:support.evangel@gmail.com">support.evangel@gmail.com</a></footer>
     <EvangelBot page={page} onNavigate={navigatePage} passage={verse} notify={notify} voiceName={voiceName} premiumVoice={premiumVoice} onUseInCreator={startCreatorFromNote}/>
     {toast && <div className="toast">{toast}</div>}
   </div>;
