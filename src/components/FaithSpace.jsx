@@ -32,10 +32,11 @@ function shortText(value, max = 76) {
 }
 
 function deterministicOffset(index) {
-  const ring = Math.floor(index / 6);
-  const angle = (index % 6) * (Math.PI * 2 / 6) + ring * 0.38;
-  const radius = 0.75 + ring * 0.5;
-  return [Math.cos(angle) * radius, Math.sin(angle) * radius * 0.72, Math.sin(angle * 1.7) * 0.52];
+  const slots = 5;
+  const ring = Math.floor(index / slots);
+  const angle = (index % slots) * (Math.PI * 2 / slots) + ring * 0.44;
+  const radius = 1.1 + ring * 1.05;
+  return [Math.cos(angle) * radius, Math.sin(angle) * radius * 0.82, Math.sin(angle * 1.7) * 0.7];
 }
 
 function appendText(parent, tagName, value) {
@@ -45,7 +46,7 @@ function appendText(parent, tagName, value) {
   return node;
 }
 
-function makeLabel(item, meta, onActivate) {
+function makeLabel(item, meta, onActivate, onDragStart) {
   const el = document.createElement("button");
   el.type = "button";
   el.className = `faith-node-card faith-node-${item.kind || "memory"}`;
@@ -53,22 +54,37 @@ function makeLabel(item, meta, onActivate) {
   appendText(el, "span", meta.label);
   appendText(el, "strong", shortText(item.title || item.ref || "Saved moment", 34));
   appendText(el, "p", shortText(item.text || item.ref, 72));
+  el.addEventListener("pointerdown", (event) => onDragStart(item, event, el));
   el.addEventListener("click", (event) => {
     event.stopPropagation();
+    if (el.dataset.dragged === "true") { el.dataset.dragged = "false"; return; }
     onActivate(item);
   });
   return el;
 }
 
 
-export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVoice = "marin", fallbackVoiceName = "", accent = "#f5c542", notify, onConverted }) {
+export default function FaithSpace({ items = [], onSelect, onOpenItem, onPositionChange, focusItemId = "", motionPaused = false, resetSignal = 0, premiumVoice = "marin", fallbackVoiceName = "", accent = "#f5c542", notify, onConverted }) {
   const mountRef = useRef(null);
   const onSelectRef = useRef(onSelect);
   const onOpenItemRef = useRef(onOpenItem);
+  const onPositionChangeRef = useRef(onPositionChange);
+  const motionPausedRef = useRef(motionPaused);
+  const focusItemIdRef = useRef(focusItemId);
+  const sceneControlRef = useRef(null);
   const [picked, setPicked] = useState(null);
 
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
   useEffect(() => { onOpenItemRef.current = onOpenItem; }, [onOpenItem]);
+  useEffect(() => { onPositionChangeRef.current = onPositionChange; }, [onPositionChange]);
+  useEffect(() => { motionPausedRef.current = motionPaused; }, [motionPaused]);
+  useEffect(() => {
+    focusItemIdRef.current = focusItemId;
+    if (!focusItemId) return;
+    const item = items.find((entry) => entry.id === focusItemId);
+    if (item) setPicked(item);
+    sceneControlRef.current?.focus(focusItemId);
+  }, [focusItemId, items]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -195,7 +211,11 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
       const count = groupCounts[item.kind] || 0;
       groupCounts[item.kind] = count + 1;
       const [ox, oy, oz] = deterministicOffset(count);
-      const anchor = new THREE.Vector3(meta.center[0] + ox, meta.center[1] + oy, meta.center[2] + oz);
+      const saved = item.spatial;
+      const hasSavedPosition = saved && [saved.x, saved.y, saved.z].every(Number.isFinite);
+      const anchor = hasSavedPosition
+        ? new THREE.Vector3(saved.x, saved.y, saved.z)
+        : new THREE.Vector3(meta.center[0] + ox, meta.center[1] + oy, meta.center[2] + oz);
       const ageScale = Math.max(0.72, 1 - idx * 0.018);
       const radius = item.kind === "answered_prayer" ? 0.34 : 0.26;
       const mesh = new THREE.Mesh(
@@ -212,10 +232,12 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
       mesh.add(glow);
       mesh.userData.glow = glow;
 
-      const label = new CSS2DObject(makeLabel(item, meta, selectItem));
+      const node = { mesh, label: null, anchor, phase: idx * 0.83, item };
+      const label = new CSS2DObject(makeLabel(item, meta, selectItem, (_item, event, element) => beginNodeDrag(node, event, element)));
       label.position.set(0, 0.52, 0);
       mesh.add(label);
-      nodeMeshes.push({ mesh, label, anchor, phase: idx * 0.83, item });
+      node.label = label;
+      nodeMeshes.push(node);
 
       const center = centers.get(item.kind);
       if (center) {
@@ -225,18 +247,80 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
     });
 
     let rotX = 0.06, rotY = 0;
-    let dragging = false, downX = 0, downY = 0, lastX = 0, lastY = 0;
+    let cameraDistance = 17.5;
+    let dragging = false, draggedNode = null, downX = 0, downY = 0, lastX = 0, lastY = 0;
+    const beginNodeDrag = (node, event, element) => {
+      event.preventDefault();
+      event.stopPropagation();
+      element.setPointerCapture?.(event.pointerId);
+      element.classList.add("dragging");
+      draggedNode = { node, element, pointerId: event.pointerId, lastX: event.clientX, lastY: event.clientY, moved: false };
+      selectItem(node.item);
+    };
     const onDown = (event) => { dragging = true; downX = lastX = event.clientX; downY = lastY = event.clientY; };
     const onMove = (event) => {
+      if (draggedNode) {
+        const dx = event.clientX - draggedNode.lastX;
+        const dy = event.clientY - draggedNode.lastY;
+        const scale = cameraDistance / Math.max(width, 480) * 2.25;
+        draggedNode.node.anchor.x += dx * scale;
+        draggedNode.node.anchor.y -= dy * scale;
+        draggedNode.lastX = event.clientX;
+        draggedNode.lastY = event.clientY;
+        draggedNode.moved = draggedNode.moved || Math.abs(dx) + Math.abs(dy) > 2;
+        return;
+      }
       if (!dragging) return;
       rotY += (event.clientX - lastX) * 0.006;
       rotX = THREE.MathUtils.clamp(rotX + (event.clientY - lastY) * 0.004, -0.65, 0.65);
       lastX = event.clientX; lastY = event.clientY;
     };
-    const onUp = () => { dragging = false; };
+    const onUp = () => {
+      if (draggedNode) {
+        const finished = draggedNode;
+        finished.element.classList.remove("dragging");
+        if (finished.moved) {
+          finished.element.dataset.dragged = "true";
+          const { x, y, z } = finished.node.anchor;
+          onPositionChangeRef.current?.(finished.node.item, { x: Number(x.toFixed(3)), y: Number(y.toFixed(3)), z: Number(z.toFixed(3)), layout: "custom-v1" });
+        }
+        draggedNode = null;
+      }
+      dragging = false;
+    };
+    const onWheel = (event) => {
+      event.preventDefault();
+      cameraDistance = THREE.MathUtils.clamp(cameraDistance + event.deltaY * 0.012, 9, 30);
+    };
+    let pinchDistance = 0, pinchCameraDistance = cameraDistance;
+    const onTouchStart = (event) => {
+      if (event.touches.length !== 2) return;
+      pinchDistance = Math.hypot(event.touches[0].clientX - event.touches[1].clientX, event.touches[0].clientY - event.touches[1].clientY);
+      pinchCameraDistance = cameraDistance;
+    };
+    const onTouchMove = (event) => {
+      if (event.touches.length !== 2 || !pinchDistance) return;
+      event.preventDefault();
+      const distance = Math.hypot(event.touches[0].clientX - event.touches[1].clientX, event.touches[0].clientY - event.touches[1].clientY);
+      cameraDistance = THREE.MathUtils.clamp(pinchCameraDistance * pinchDistance / Math.max(distance, 1), 9, 30);
+    };
     renderer.domElement.addEventListener("pointerdown", onDown);
+    mount.addEventListener("wheel", onWheel, { passive: false });
+    mount.addEventListener("touchstart", onTouchStart, { passive: true });
+    mount.addEventListener("touchmove", onTouchMove, { passive: false });
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
+
+    sceneControlRef.current = {
+      focus(id) {
+        const node = nodeMeshes.find((entry) => entry.item.id === id);
+        if (!node) return;
+        selectItem(node.item);
+        rotY = THREE.MathUtils.clamp(-Math.atan2(node.anchor.x, Math.max(1, cameraDistance - node.anchor.z)), -1.2, 1.2);
+        rotX = THREE.MathUtils.clamp(node.anchor.y * 0.035, -0.35, 0.35);
+      },
+    };
+    if (focusItemIdRef.current) sceneControlRef.current.focus(focusItemIdRef.current);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -257,9 +341,10 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
       const t = performance.now() * 0.001;
       root.rotation.x += (rotX - root.rotation.x) * 0.07;
       root.rotation.y += (rotY - root.rotation.y) * 0.07;
-      if (!dragging && !reducedMotion) rotY += 0.0009;
-      if (!reducedMotion) skyGroup.rotation.y += 0.0003;
-      camera.position.z = 17.5 + (reducedMotion ? 0 : Math.sin(t * 0.15) * 0.3);
+      const paused = reducedMotion || motionPausedRef.current;
+      if (!dragging && !draggedNode && !paused) rotY += 0.0009;
+      if (!paused) skyGroup.rotation.y += 0.0003;
+      camera.position.z += (cameraDistance - camera.position.z) * 0.12;
       shootingStars.forEach((s) => {
         if (reducedMotion) return;
         if (s.delay > 0) { s.delay--; return; }
@@ -274,10 +359,12 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
         layer.material.opacity = reducedMotion ? base : base + Math.sin(t * 0.8 + idx) * 0.12;
       });
       nodeMeshes.forEach((node, i) => {
-        node.mesh.position.x = node.anchor.x + (reducedMotion ? 0 : Math.cos(t * 0.35 + node.phase) * 0.16);
-        node.mesh.position.y = node.anchor.y + (reducedMotion ? 0 : Math.sin(t * 0.62 + node.phase) * 0.24);
-        node.mesh.position.z = node.anchor.z + (reducedMotion ? 0 : Math.sin(t * 0.29 + i) * 0.12);
-        if (!reducedMotion) node.mesh.rotation.y += 0.004;
+        const isFocused = focusItemIdRef.current === node.item.id;
+        node.mesh.position.x = node.anchor.x + (paused || draggedNode?.node === node ? 0 : Math.cos(t * 0.35 + node.phase) * 0.16);
+        node.mesh.position.y = node.anchor.y + (paused || draggedNode?.node === node ? 0 : Math.sin(t * 0.62 + node.phase) * 0.24);
+        node.mesh.position.z = node.anchor.z + (isFocused ? 2.2 : 0) + (paused || draggedNode?.node === node ? 0 : Math.sin(t * 0.29 + i) * 0.12);
+        node.mesh.scale.setScalar((Math.max(0.72, 1 - i * 0.018)) * (isFocused ? 1.35 : 1));
+        if (!paused) node.mesh.rotation.y += 0.004;
         const gl = node.mesh.userData.glow;
         if (gl) gl.material.opacity = 0.45 + (reducedMotion ? 0 : Math.sin(t * 0.7 + node.phase) * 0.15);
       });
@@ -300,13 +387,17 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
       cancelAnimationFrame(raf);
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointerup", onPick);
+      mount.removeEventListener("wheel", onWheel);
+      mount.removeEventListener("touchstart", onTouchStart);
+      mount.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("resize", onResize);
+      sceneControlRef.current = null;
       renderer.dispose();
       mount.replaceChildren();
     };
-  }, [items, accent]);
+  }, [items, accent, resetSignal]);
 
   const sharePicked = async () => {
     if (!picked) return;
@@ -318,7 +409,7 @@ export default function FaithSpace({ items = [], onSelect, onOpenItem, premiumVo
   return (
     <div className="faith-space-renderer">
       <div ref={mountRef} className="faith-space-webgl" aria-label="Interactive Faith Space with moving saved-item nodes" />
-      <div className="faith-space-instructions">Drag the background to orbit · tap any visible card to select it</div>
+      <div className="faith-space-instructions">Drag a card to move it · drag the background to orbit · wheel or pinch to zoom</div>
       {picked && (
         <aside className="faith-node-detail glass" aria-live="polite">
           <small>{kindMeta(picked).label} · {picked.createdAt || "Saved"}</small>
