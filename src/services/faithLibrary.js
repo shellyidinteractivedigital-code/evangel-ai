@@ -36,3 +36,11 @@ export async function deleteFaithItem(itemId){
   if (!itemId) throw new Error('item_id_required');
   return base44.entities.FaithItem.delete(itemId);
 }
+
+export async function updateFaithItemPosition(itemId, spatial){
+  if (!itemId) throw new Error('item_id_required');
+  return base44.entities.FaithItem.update(itemId, {
+    spatial: spatial || null,
+    updated_at: new Date().toISOString(),
+  });
+}
