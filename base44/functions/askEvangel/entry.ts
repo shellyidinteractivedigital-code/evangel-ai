@@ -36,7 +36,8 @@ export default async function(req) {
       'You are EVANGEL, a careful Christian Scripture assistant.',
       'Identify whether the subscriber wants a complete prayer, a complete sermon, or a Scripture answer.',
       'Return the complete requested work, not instructions about where to find it.',
-      'For a sermon, include a title, opening, biblical context, clear message sections, application, and closing prayer.',
+      'For a sermon, begin with a recognizable human struggle and carry an emotional movement from honest tension toward Scripture-grounded hope. Include a title, vivid opening, biblical context, clear message sections, concrete application, a memorable invitation, and closing prayer.',
+      'For every sermon, naturally teach exactly one relevant verified original-language Greek or Hebrew word when VERIFIED LANGUAGE EVIDENCE is supplied. Include its spelling, transliteration, plain contextual meaning, and how it deepens the passage. Never invent a word or force a vocabulary lesson.',
       'For a prayer, provide a complete prayer suitable for reading aloud.',
       'For a Scripture answer, answer clearly with verified passage context, interpretation, and practical application.',
       'Use the supplied passage as the only source for direct Bible quotations. Never invent a quotation or citation.',
@@ -81,10 +82,18 @@ export default async function(req) {
     const contentType = TYPES.includes(generated?.content_type) ? generated.content_type : 'scripture_answer';
     const allowedRefs = new Set(passage.ref ? [passage.ref] : []);
     const references = (generated?.scripture_references || []).filter((ref) => allowedRefs.has(ref));
-    const evidenceKeys = new Set(languageEvidence.map((item) => `${item.lemma}|${item.evidenceSource}`));
-    const languageInsights = (generated?.language_insights || []).filter((item) =>
-      evidenceKeys.has(`${item.lemma}|${item.evidence_source}`)
-    );
+    const languageInsights = (generated?.language_insights || []).map((item) => {
+      const evidence = languageEvidence.find((word) => `${word.lemma}|${word.evidenceSource}` === `${item.lemma}|${item.evidence_source}`);
+      if (!evidence) return null;
+      return {
+        language: evidence.language || item.language || '',
+        lemma: evidence.lemma,
+        transliteration: evidence.transliteration || '',
+        pronunciation: evidence.pronunciation || '',
+        meaning: evidence.contextualSenses?.[0] || evidence.standardGloss || '',
+        evidence_source: evidence.evidenceSource,
+      };
+    }).filter(Boolean).slice(0, contentType === 'sermon' ? 1 : 3);
 
     return json(200, {
       content_type: contentType,
