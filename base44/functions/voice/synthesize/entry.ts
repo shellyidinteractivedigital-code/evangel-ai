@@ -1,6 +1,7 @@
-import { createClientFromRequest, secrets } from 'base44:runtime';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
+import { secrets } from 'base44:runtime';
 
-const ALLOWED_VOICES = new Set(['marin','cedar']);
+const ALLOWED_VOICES = new Set(['alloy','ash','ballad','coral','echo','fable','nova','onyx','sage','shimmer','verse','marin','cedar']);
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
