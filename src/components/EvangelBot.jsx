@@ -3,6 +3,7 @@ import { Bot, BookOpen, Clipboard, ExternalLink, FolderOpen, MessageCircle, Save
 import { askEvangel } from '../services/askEvangel';
 import { saveFaithItem } from '../services/faithLibrary';
 import { speakEvangel } from '../services/evangelVoice';
+import { getSermonLanguageEvidence } from '../data/sermonLanguageEvidence';
 
 const LINKS = [
   { page: 'study', label: 'Study Scripture', Icon: BookOpen },
@@ -10,6 +11,20 @@ const LINKS = [
   { page: 'notes', label: 'My Notes', Icon: StickyNote },
   { page: 'space', label: 'Faith Space', Icon: FolderOpen },
 ];
+
+function answerWithLanguage(answer) {
+  if (!answer?.content) return '';
+  const word = answer.content_type === 'sermon' ? answer.language_insights?.[0] : null;
+  if (!word) return answer.content;
+  const insight = [
+    'Original-language insight',
+    `${word.language}: ${word.lemma}${word.transliteration ? ` (${word.transliteration})` : ''}`,
+    word.pronunciation ? `Pronounced: ${word.pronunciation}` : '',
+    word.meaning,
+    word.evidence_source ? `Source: ${word.evidence_source}` : '',
+  ].filter(Boolean).join('\n');
+  return `${answer.content}\n\n${insight}`;
+}
 
 const PAGE_HELP = {
   home: 'Ask for a complete prayer, sermon, or Scripture answer based on today’s passage.',
@@ -33,7 +48,8 @@ export default function EvangelBot({ page, onNavigate, passage, notify, voiceNam
     if (!question.trim() || busy) return;
     setBusy(true); setError(''); setAnswer(null);
     try {
-      const result = await askEvangel({ question: question.trim(), page, passage: passage ? { ...passage, source: 'World English Bible' } : null, languageEvidence: [] });
+      const languageEvidence = getSermonLanguageEvidence(passage);
+      const result = await askEvangel({ question: question.trim(), page, passage: passage ? { ...passage, source: 'World English Bible' } : null, languageEvidence });
       setAnswer(result);
     } catch (requestError) {
       setError(requestError?.code === 'unauthorized' ? 'Please sign in to ask EVANGEL.' : requestError?.message || 'EVANGEL could not create an answer. Please try again.');
@@ -42,7 +58,7 @@ export default function EvangelBot({ page, onNavigate, passage, notify, voiceNam
 
   const copy = async () => {
     if (!answer?.content) return;
-    try { await navigator.clipboard.writeText(`${answer.title}\n\n${answer.content}`); notify?.('Answer copied'); }
+    try { await navigator.clipboard.writeText(`${answer.title}\n\n${answerWithLanguage(answer)}`); notify?.('Answer copied'); }
     catch { notify?.('Copy is unavailable in this browser.'); }
   };
 
@@ -53,7 +69,7 @@ export default function EvangelBot({ page, onNavigate, passage, notify, voiceNam
       await saveFaithItem({
         kind,
         title: answer.title,
-        text: answer.content,
+        text: answerWithLanguage(answer),
         scripture_ref: answer.passage?.ref || '',
         tags: ['evangel_bot', 'generated'],
         generator_type: answer.content_type === 'scripture_answer' ? 'scripture_study' : answer.content_type,
@@ -69,7 +85,7 @@ export default function EvangelBot({ page, onNavigate, passage, notify, voiceNam
     onUseInCreator?.({
       id: '',
       title: answer.title,
-      text: answer.content,
+      text: answerWithLanguage(answer),
       scripture_ref: answer.passage?.ref || '',
       targetKind: answer.content_type === 'prayer' ? 'prayer' : 'sermon',
       generatedAnswer: answer,
@@ -97,7 +113,7 @@ export default function EvangelBot({ page, onNavigate, passage, notify, voiceNam
         <small>{answer.caution}</small>
         <div className="evangel-result-actions">
           <button onClick={copy}><Clipboard size={15}/> Copy</button>
-          <button onClick={() => speakEvangel({ text: `${answer.title}. ${answer.content}`, premiumVoice, fallbackVoiceName: voiceName })}><Volume2 size={15}/> Listen</button>
+          <button onClick={() => speakEvangel({ text: `${answer.title}. ${answerWithLanguage(answer)}`, premiumVoice, fallbackVoiceName: voiceName })}><Volume2 size={15}/> Listen</button>
           <button onClick={save}><Save size={15}/> Save</button>
           <button onClick={openInCreator}><ExternalLink size={15}/> Open in Creator</button>
         </div>
