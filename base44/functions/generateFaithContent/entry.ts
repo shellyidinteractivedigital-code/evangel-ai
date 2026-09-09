@@ -22,6 +22,21 @@ function allowedCitation(citation, bundle) {
   );
 }
 
+function sourceLanguageInsight(insight, bundle) {
+  const word = (bundle.words || []).find((entry) =>
+    entry.lemma === insight?.lemma && entry.evidenceSource === insight?.evidence_source
+  );
+  if (!word) return null;
+  return {
+    language: word.language || insight.language || '',
+    lemma: word.lemma,
+    transliteration: word.transliteration || '',
+    pronunciation: word.pronunciation || '',
+    meaning: word.contextualSenses?.[0] || word.standardGloss || '',
+    evidence_source: word.evidenceSource,
+  };
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -46,7 +61,10 @@ export default async function(req) {
       `Create a complete ${body.type}. The subscriber's CREATOR IDEA is the primary instruction. Follow its subject, purpose, people, story, tone, requested elements, and desired ending.`,
       'Use the verified Scripture to ground and deepen the subscriber’s idea, never to replace the idea with a generic message.',
       'Avoid generic filler, repeated platitudes, vague introductions, and interchangeable points. Make every section serve the specific creator idea.',
-      'For sermons, develop a compelling opening, faithful context, memorable movement, concrete application, and a closing prayer or invitation appropriate to the request and selected structure.',
+      'For sermons, begin with a recognizable human struggle, develop a compelling opening, faithful context, an emotional movement from tension toward grounded hope, concrete application, and a closing prayer or invitation appropriate to the request and selected structure.',
+      body.type === 'sermon'
+        ? 'Use exactly one relevant original-language insight from VERIFIED EVIDENCE when words are supplied. Give the Greek or Hebrew spelling, transliteration, a plain contextual meaning, and weave its significance naturally into the sermon. Never turn the sermon into a vocabulary dump. If no verified word is supplied, do not invent one and state the limitation in warnings.'
+        : 'Use original-language evidence only when it genuinely serves the requested work.',
       'For prayers, directly address the stated need with warmth, specificity, and language suitable for reading aloud.',
       'Use only the supplied evidence for Bible quotations, references, Hebrew, Aramaic, and Greek claims.',
       'Clearly separate verified Scripture, linguistic evidence, interpretation, tradition-specific perspective, application, illustration, and prayer.',
@@ -78,9 +96,20 @@ export default async function(req) {
             },
           },
           citations: { type: 'array', items: { type: 'string' } },
+          language_insights: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                language: { type: 'string' }, lemma: { type: 'string' }, transliteration: { type: 'string' },
+                pronunciation: { type: 'string' }, meaning: { type: 'string' }, evidence_source: { type: 'string' },
+              },
+              required: ['language', 'lemma', 'transliteration', 'meaning', 'evidence_source'],
+            },
+          },
           warnings: { type: 'array', items: { type: 'string' } },
         },
-        required: ['title', 'sections', 'citations', 'warnings'],
+        required: ['title', 'sections', 'citations', 'language_insights', 'warnings'],
       },
     });
 
@@ -88,7 +117,15 @@ export default async function(req) {
       allowedCitation(citation, body.researchBundle)
     );
     const rejectedCount = (generated?.citations || []).length - citations.length;
+    const languageInsights = (generated?.language_insights || []).map((insight) =>
+      sourceLanguageInsight(insight, body.researchBundle)
+    ).filter(Boolean).slice(0, body.type === 'sermon' ? 1 : 3);
+    const fallbackWord = body.type === 'sermon' ? body.researchBundle.words?.[0] : null;
+    if (!languageInsights.length && fallbackWord) {
+      languageInsights.push(sourceLanguageInsight({ lemma: fallbackWord.lemma, evidence_source: fallbackWord.evidenceSource }, body.researchBundle));
+    }
     const warnings = [...(generated?.warnings || [])];
+    if (body.type === 'sermon' && !languageInsights.length) warnings.push('No verified Greek or Hebrew word was available for this passage, so no original-language claim was added.');
     if (rejectedCount) warnings.push(`${rejectedCount} unsupported citation(s) were removed.`);
 
     return response(200, {
@@ -97,6 +134,7 @@ export default async function(req) {
       central_truth: generated?.central_truth || '',
       sections: Array.isArray(generated?.sections) ? generated.sections : [],
       citations,
+      language_insights: languageInsights,
       warnings,
       disclosure: DISCLOSURE,
     });
