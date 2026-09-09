@@ -31,10 +31,11 @@ test('EVANGEL app stores a premium narrator choice independent of device voice f
   assert.match(s, /fallbackVoiceName/);
 });
 
-test('Voices page can select Marin or Cedar for the app, not only preview them', () => {
+test('Voices page can select every premium voice for the app, not only preview it', () => {
   const s = read('src/features/voices/VoicesPage.jsx');
-  assert.match(s, /onPremiumVoiceChange/);
+  assert.match(s, /PREMIUM_VOICES\.map/);
+  assert.match(s, /onPremiumVoiceChange\?\.\(v\.key\)/);
+  assert.match(s, /voice:v\.key/);
+  assert.match(s, /v\.key\.toUpperCase\(\)/);
   assert.match(s, /SELECTED/);
-  assert.match(s, /MARIN/i);
-  assert.match(s, /CEDAR/i);
 });
