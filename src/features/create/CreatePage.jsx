@@ -10,6 +10,7 @@ import GeneratorInterview from '../generators/GeneratorInterview';
 import GeneratedResult, { resultToText } from '../generators/GeneratedResult';
 import { buildResearchBundle } from '../generators/researchBundle';
 import { generateFaithContent } from '../generators/generatorClient';
+import { getSermonLanguageEvidence, getSurpriseSermonIdea, SURPRISE_SERMON_IDEAS } from '../../data/sermonLanguageEvidence';
 
 const KINDS = [
   { id: 'prayer', label: 'Prayer', kind: 'prayer', generator: 'prayer', example: 'Write a prayer for a family rebuilding trust after a difficult year.' },
@@ -95,7 +96,8 @@ export default function CreatePage({ notify, voiceName, premiumVoice, onSaved, v
     if (!verse?.ref || !verse?.text) return notify?.('Open a Scripture passage first, then return to Create.');
     setBusy(true);
     try {
-      const researchBundle = buildResearchBundle({ reference: verse.ref, passage: verse, source: WEB_SOURCE });
+      const languageRecords = getSermonLanguageEvidence(verse);
+      const researchBundle = buildResearchBundle({ reference: verse.ref, passage: verse, source: WEB_SOURCE, languageRecords });
       const response = await generateFaithContent({
         type: kindDef.generator,
         creationPrompt: creationPrompt.trim(),
@@ -111,6 +113,17 @@ export default function CreatePage({ notify, voiceName, premiumVoice, onSaved, v
     } catch (error) {
       notify?.(error?.message === 'verified_passage_required' ? 'A verified Scripture passage is required.' : error?.message === 'creation_prompt_required' ? 'Describe what you want EVANGEL to create.' : 'Generation could not finish. Please try again.');
     } finally { setBusy(false); }
+  };
+
+  const surpriseSermon = () => {
+    const idea = getSurpriseSermonIdea(Date.now());
+    setType('sermon');
+    setCreationPrompt(idea);
+    setInterview((current) => ({ ...current, emotionalDirection: 'hope', theme: idea }));
+    setGenerated(null);
+    setTitle('');
+    setText('');
+    notify?.(`A surprise sermon idea is ready. ${SURPRISE_SERMON_IDEAS.length} themes are in rotation.`);
   };
 
   const share = async () => {
@@ -153,8 +166,9 @@ export default function CreatePage({ notify, voiceName, premiumVoice, onSaved, v
     <div className="creator-prompt glass">
       <label htmlFor="creation-prompt"><b>What do you want to create?</b><span>This is the main instruction. Be specific about the message, people, problem, story, and ending you want.</span></label>
       <textarea id="creation-prompt" value={creationPrompt} onChange={(event) => setCreationPrompt(event.target.value)} placeholder={kindDef.example} rows={5}/>
-      <DictateButton onDictate={(spoken) => setCreationPrompt((value) => `${value}${value ? ' ' : ''}${spoken}`)} notify={notify} label="Speak my idea"/>
+      <div className="creator-prompt-actions"><DictateButton onDictate={(spoken) => setCreationPrompt((value) => `${value}${value ? ' ' : ''}${spoken}`)} notify={notify} label="Speak my idea"/><button className="secondary surprise-sermon" type="button" onClick={surpriseSermon}><Sparkles size={17}/> Surprise Sermon</button></div>
       <label htmlFor="supporting-notes"><b>Supporting notes or story, optional</b><span>Add key points, personal experiences, names, illustrations, or phrases you want included.</span></label>
+      {type === 'sermon' && <p className="language-promise">Every sermon uses one relevant verified Greek or Hebrew word when evidence is available, explains it simply, and carries it into a message that speaks to real life.</p>}
       <textarea id="supporting-notes" value={supportingNotes} onChange={(event) => setSupportingNotes(event.target.value)} placeholder="Ideas, story details, key points, or a closing thought..." rows={4}/>
     </div>
     <GeneratorInterview value={interview} onChange={setInterview} disabled={busy}/>
