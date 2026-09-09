@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+test('EVANGEL mark renders an open Bible becoming a road',()=>{const s=read('src/components/brand/EvangelMark.jsx');assert.match(s,/evangel-book/);assert.match(s,/evangel-road/);assert.match(s,/EVANGEL/);assert.match(s,/aria-label="EVANGEL"/);});
+test('Home and navigation use the new mark and sparkling stars',()=>{const app=read('src/app/App.jsx');const home=read('src/features/home/HomePage.jsx');assert.match(app,/EvangelMark/);assert.match(home,/SparklingStars/);assert.doesNotMatch(app,/brand-mark">✦/);});
+test('sparkling stars are decorative and reduced-motion safe',()=>{const stars=read('src/components/brand/SparklingStars.jsx');const css=read('src/styles/evangel.css');assert.match(stars,/aria-hidden="true"/);assert.match(stars,/sparkling-star/);assert.match(css,/prefers-reduced-motion:reduce/);assert.match(css,/\.sparkling-star/);});
