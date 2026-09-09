@@ -3,11 +3,16 @@ const read=p=>fs.readFileSync(p,'utf8');
 test('premium voice keys stay server-side and voices are allowlisted',()=>{const t=read('base44/functions/voice/synthesize/entry.ts');assert.match(t,/OPENAI_API_KEY/);assert.match(t,/marin/);assert.match(t,/cedar/);assert.doesNotMatch(t,/VITE_OPENAI_API_KEY/);});
 test('realtime mic gateway uses authenticated WebRTC call proxy',()=>{const t=read('base44/functions/voice/realtimeCall/entry.ts');assert.match(t,/auth\.me/);assert.match(t,/application\/sdp/);assert.match(t,/\/v1\/realtime\/calls/);assert.match(t,/Never claim to speak for God/);});
 
-test('Voice Sanctuary offers every built-in narration voice',()=>{
+test('Voice Sanctuary exposes only the approved three female and three male voices',()=>{
   const service=read('src/services/premiumVoice.js');
   const backend=read('base44/functions/voice/synthesize/entry.ts');
-  const voices=['alloy','ash','ballad','coral','echo','fable','nova','onyx','sage','shimmer','verse','marin','cedar'];
-  for(const voice of voices){assert.match(service,new RegExp(`key: '${voice}'`));assert.match(backend,new RegExp(`'${voice}'`));}
+  const approved=['marin','coral','shimmer','cedar','onyx','echo'];
+  const removed=['alloy','ash','ballad','fable','nova','sage','verse'];
+  for(const voice of approved){assert.match(service,new RegExp(`key: '${voice}'`));assert.match(backend,new RegExp(`'${voice}'`));}
+  for(const voice of removed){assert.doesNotMatch(service,new RegExp(`key: '${voice}'`));assert.doesNotMatch(backend,new RegExp(`'${voice}'`));}
+  assert.equal((service.match(/presentation: 'female'/g)||[]).length,3);
+  assert.equal((service.match(/presentation: 'male'/g)||[]).length,3);
+  assert.doesNotMatch(service,/presentation: 'neutral'/);
 });
 
 test('voice endpoints enforce paid entitlement, POST-only access, and server-side quotas',()=>{
