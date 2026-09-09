@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { guardPremiumVoiceRequest } from '../../../shared/voice/security.js';
 
-const REALTIME_VOICES = new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
+const REALTIME_VOICES = new Set(['marin','coral','shimmer','cedar','echo']);
 
 Deno.serve(async (req) => {
   try {
