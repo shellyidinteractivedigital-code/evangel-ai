@@ -10,6 +10,24 @@ test('Voice Sanctuary offers every built-in narration voice',()=>{
   for(const voice of voices){assert.match(service,new RegExp(`key: '${voice}'`));assert.match(backend,new RegExp(`'${voice}'`));}
 });
 
+test('voice endpoints enforce paid entitlement, POST-only access, and server-side quotas',()=>{
+  const synth=read('base44/functions/voice/synthesize/entry.ts');
+  const realtime=read('base44/functions/voice/realtimeCall/entry.ts');
+  const guard=read('base44/shared/voice/security.js');
+  const usage=read('base44/entities/VoiceUsageWindow.jsonc');
+  for(const endpoint of [synth,realtime]){
+    assert.match(endpoint,/req\.method !== 'POST'/);
+    assert.match(endpoint,/guardPremiumVoiceRequest/);
+    assert.match(endpoint,/Retry-After/);
+  }
+  assert.match(guard,/feature_key: 'premium_voices'/);
+  assert.match(guard,/active: true/);
+  assert.match(guard,/VoiceUsageWindow/);
+  assert.match(guard,/expires_at/);
+  const usageSchema=JSON.parse(usage);
+  assert.deepEqual(usageSchema.rls,{create:false,read:false,update:false,delete:false});
+});
+
 test('Voice Sanctuary distinguishes realtime voices from narration-only choices',()=>{
   const service=read('src/services/premiumVoice.js');
   const page=read('src/features/voices/VoicesPage.jsx');
