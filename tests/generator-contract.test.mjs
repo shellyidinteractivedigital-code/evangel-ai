@@ -15,3 +15,35 @@ test('frontend generator client uses the shared Base44 client', () => {
   assert.match(source, /base44\.functions\.invoke\('generateFaithContent'/);
   assert.doesNotMatch(source, /createClient/);
 });
+
+test('sermons require one verified original-language insight and an emotional arc', () => {
+  const generator = fs.readFileSync('base44/functions/generateFaithContent/entry.ts', 'utf8');
+  const bot = fs.readFileSync('base44/functions/askEvangel/entry.ts', 'utf8');
+  for (const source of [generator, bot]) {
+    assert.match(source, /original-language|original language/i);
+    assert.match(source, /human struggle|emotional/i);
+    assert.match(source, /verified/i);
+    assert.match(source, /contextualSenses|standardGloss/);
+  }
+  assert.match(generator, /body\.type === 'sermon'/);
+  assert.match(generator, /language_insights/);
+  assert.match(generator, /fallbackWord/);
+  const result = fs.readFileSync('src/features/generators/GeneratedResult.jsx', 'utf8');
+  assert.match(result, /language_insights/);
+  assert.match(result, /Original-language insight/);
+});
+
+test('Creator offers surprise sermon ideas grounded in verified passage evidence', () => {
+  const creator = fs.readFileSync('src/features/create/CreatePage.jsx', 'utf8');
+  assert.match(creator, /Surprise Sermon/);
+  assert.match(creator, /getSermonLanguageEvidence/);
+  assert.match(creator, /SURPRISE_SERMON_IDEAS/);
+  assert.match(creator, /languageRecords/);
+});
+
+test('EVANGEL bot attaches verified sermon language evidence', () => {
+  const bot = fs.readFileSync('src/components/EvangelBot.jsx', 'utf8');
+  assert.match(bot, /getSermonLanguageEvidence/);
+  assert.doesNotMatch(bot, /languageEvidence:\s*\[\]/);
+  assert.match(bot, /answerWithLanguage/);
+});
