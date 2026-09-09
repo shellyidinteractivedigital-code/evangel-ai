@@ -42,7 +42,7 @@ The page is written in first-person plural.
 
 Core opening:
 
-> We created EVANGEL because we believe Scripture should be understood, explored, and lived. We are believers and educators using technology in service to God.
+> We created EVANGEL because discovering Scripture should feel alive, inspiring, and full of possibility. We are believers and educators who love helping people understand the Bible, explore the beauty of Hebrew and Greek, create meaningful prayers and sermons, and carry what they learn into everyday life. EVANGEL brings study, creativity, voice, and technology together in one welcoming space. It does not replace Scripture, prayer, pastors, teachers, community, or personal discernment. It simply helps more people open the Word, ask thoughtful questions, and move forward with faith, understanding, and hope.
 
 The story explains that EVANGEL helps people ask questions, pray, study context, explore Hebrew and Greek, prepare sermons, and preserve meaningful work. It welcomes believers, seekers, families, pastors, teachers, and ministry communities.
 
