@@ -1,0 +1,49 @@
+{
+  "name": "VoiceUsageWindow",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "synthesis",
+        "realtime"
+      ]
+    },
+    "window_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_count": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "unit_count": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id",
+    "kind",
+    "window_key",
+    "request_count",
+    "unit_count",
+    "expires_at"
+  ],
+  "rls": {
+    "create": false,
+    "read": false,
+    "update": false,
+    "delete": false
+  }
+}
