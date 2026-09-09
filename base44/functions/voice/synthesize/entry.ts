@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.46';
 import { secrets } from 'base44:runtime';
 import { guardPremiumVoiceRequest } from '../../../shared/voice/security.js';
 
-const ALLOWED_VOICES = new Set(['alloy','ash','ballad','coral','echo','fable','nova','onyx','sage','shimmer','verse','marin','cedar']);
+const ALLOWED_VOICES = new Set(['marin','coral','shimmer','cedar','onyx','echo']);
 Deno.serve(async (req) => {
   try {
     if (req.method !== 'POST') return Response.json({ error: 'method_not_allowed' }, { status: 405, headers: { Allow: 'POST' } });
